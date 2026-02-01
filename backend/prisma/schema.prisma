@@ -8,6 +8,13 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum Role {
+  STUDENT
+  TUTOR
+  ADMIN
+  AI_TUTOR
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -16,11 +23,101 @@ model User {
   role      Role     @default(STUDENT)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Relations
+  coursesOwned    Course[] @relation("CourseAuthor")
+  enrollments     Enrollment[]
+  progress        Progress[]
+  certificates    Certificate[]
+  payments        Payment[]
 }
 
-enum Role {
-  STUDENT
-  TUTOR
-  ADMIN
-  AI_TUTOR
+model Course {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  thumbnail   String?
+  price       Float    @default(0.0)
+  published   Boolean  @default(false)
+  authorId    String
+  author      User     @relation("CourseAuthor", fields: [authorId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  chapters    Chapter[]
+  enrollments Enrollment[]
+  payments    Payment[]
+}
+
+model Chapter {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  position    Int
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lessons     Lesson[]
+}
+
+model Lesson {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  videoUrl    String?  // YouTube or Local URL
+  position    Int
+  chapterId   String
+  chapter     Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  progress    Progress[]
+}
+
+model Enrollment {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, courseId])
+}
+
+model Progress {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  lessonId  String
+  lesson    Lesson   @relation(fields: [lessonId], references: [id])
+  isCompleted Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, lessonId])
+}
+
+model Certificate {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  courseId  String   // Simplified for now, could be relation
+  issuedAt  DateTime @default(now())
+  pdfUrl    String?
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  courseId      String
+  course        Course   @relation(fields: [courseId], references: [id])
+  amount        Float
+  status        String   // PENDING, COMPLETED, FAILED
+  provider      String   // STRIPE, RAZORPAY
+  transactionId String?
+  createdAt     DateTime @default(now())
 }

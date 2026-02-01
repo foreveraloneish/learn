@@ -1,0 +1,19 @@
+{
+  "name": "Cyber LMS Dev Container",
+  "dockerComposeFile": [
+    "../docker-compose.yml"
+  ],
+  "service": "backend",
+  "workspaceFolder": "/app",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "prisma.prisma",
+        "oven.bun-vscode"
+      ]
+    }
+  },
+  "remoteUser": "root"
+}
