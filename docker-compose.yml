@@ -1,0 +1,57 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cyber_lms_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+    ports:
+      - "5432:5432"
+
+  pgbouncer:
+    build: ./pgbouncer
+    container_name: cyber_lms_pgbouncer
+    ports:
+      - "6432:6432"
+    depends_on:
+      - postgres
+    networks:
+      - app_network
+
+  backend:
+    build: ./backend
+    container_name: cyber_lms_backend
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      DIRECT_URL: ${DIRECT_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 3000
+    depends_on:
+      - postgres
+      - pgbouncer
+    networks:
+      - app_network
+
+  frontend:
+    build: ./frontend
+    container_name: cyber_lms_frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
